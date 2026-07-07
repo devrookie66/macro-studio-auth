@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Authorize Macro Studio</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@700&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -19,6 +21,7 @@
       --text: #efefef;
       --text-muted: #888;
     }
+
     body {
       background: var(--bg);
       color: var(--text);
@@ -30,6 +33,7 @@
       height: 100vh;
       overflow: hidden;
     }
+
     .container {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -38,12 +42,13 @@
       text-align: center;
       max-width: 380px;
       width: 90%;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.85);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 20px;
     }
+
     .brand {
       font-size: 20px;
       font-weight: 700;
@@ -52,6 +57,7 @@
       align-items: baseline;
       gap: 6px;
     }
+
     .brand-signature {
       font-family: 'Caveat', cursive;
       font-size: 16px;
@@ -59,6 +65,7 @@
       transform: rotate(-5deg);
       display: inline-block;
     }
+
     .spinner {
       box-sizing: border-box;
       width: 44px;
@@ -68,6 +75,7 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
+
     .icon {
       width: 54px;
       height: 54px;
@@ -79,16 +87,19 @@
       font-weight: bold;
       animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+
     .icon.success {
       background: var(--success-glow);
       border: 1px solid var(--success);
       color: var(--success);
     }
+
     .icon.error {
       background: rgba(248, 113, 113, 0.1);
       border: 1px solid var(--danger);
       color: var(--danger);
     }
+
     h1 {
       font-size: 15px;
       font-weight: 700;
@@ -96,36 +107,51 @@
       letter-spacing: 1px;
       text-transform: uppercase;
     }
+
     p {
       color: var(--text-muted);
       font-size: 11px;
       line-height: 1.5;
       margin: 0;
     }
+
     .id-badge {
       font-family: monospace;
       font-size: 9px;
-      background: rgba(255,255,255,0.02);
+      background: rgba(255, 255, 255, 0.02);
       padding: 3px 8px;
       border: 1px solid var(--border);
       border-radius: 4px;
       color: var(--primary);
     }
+
     @keyframes spin {
-      100% { transform: rotate(360deg); }
+      100% {
+        transform: rotate(360deg);
+      }
     }
+
     @keyframes pop {
-      0% { transform: scale(0.6); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
+      0% {
+        transform: scale(0.6);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="container" id="app">
     <div class="brand">MACRO STUDIO <span class="brand-signature">by reil</span></div>
     <div class="spinner" id="state-icon"></div>
     <h1 id="state-title" style="color: var(--primary);">COMPLETING AUTHORIZATION...</h1>
-    <p id="state-desc">Exchanging credentials and authorizing your desktop application. Please do not close this window.</p>
+    <p id="state-desc">Exchanging credentials and authorizing your desktop application. Please do not close this window.
+    </p>
     <div class="id-badge" id="id-badge" style="display:none;"></div>
   </div>
 
@@ -164,21 +190,22 @@
         async function handleSession(session) {
           if (!session || sessionHandled) return;
           sessionHandled = true;
-          
+
           try {
-            const { error } = await supabase
-              .from('auth_handshakes')
-              .upsert({
-                id: reqId,
+            const { data, error } = await supabase
+              .rpc('store_handshake_session', {
+                req_id: reqId,
                 access_token: session.access_token,
                 refresh_token: session.refresh_token
               });
 
             if (error) throw error;
+            if (data && !data.success) throw new Error(data.message);
             showSuccess();
           } catch (err) {
             sessionHandled = false; // allow retry
-            showError("Authorization Failed", err.message || err);
+            console.error("Authorization error details:", err);
+            showError("Authorization Failed", "A temporary connection issue occurred. Please return to the desktop application and try signing in again.");
           }
         }
 
@@ -217,4 +244,5 @@
     }
   </script>
 </body>
+
 </html>
